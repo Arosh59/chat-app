@@ -29,7 +29,7 @@ import { Toaster } from "react-hot-toast";
 
 
      return (
-    <div>
+    <div data-theme="retro">
       <Navbar />
 
       <Routes>
