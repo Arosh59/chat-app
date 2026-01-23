@@ -1,22 +1,26 @@
-import daisyui from "daisyui"
-
+/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  plugins: [daisyui], 
+  theme: {
+    extend: {},
+  },
+  plugins: [require("daisyui")],
+  // DAISYUI CONFIGURATION
   daisyui: {
-    theme: [
+    themes: [
       "light",
       "dark",
       "cupcake",
-      "emerald",
       "bumblebee",
+      "emerald",
       "corporate",
-      "retro",
       "synthwave",
-      "forest",
+      "retro",
+      "cyberpunk",
       "valentine",
       "halloween",
       "garden",
+      "forest",
       "aqua",
       "lofi",
       "pastel",
@@ -37,7 +41,5 @@ export default {
       "nord",
       "sunset",
     ],
-  
   },
-  
 };
