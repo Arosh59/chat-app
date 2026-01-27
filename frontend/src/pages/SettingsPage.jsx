@@ -1,11 +1,21 @@
 import { useThemeStore } from '../store/useThemeStore';
 import { THEMES } from '../constants'; 
 import { Send } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
   { id: 2, content: "I'm doing great! Just working on some new features.", isSent: true },
 ];
+
+const AppQRCode = () => {
+  return (
+    <div className="flex flex-col items-center p-4 bg-white rounded-lg">
+      <h2 className="text-black mb-2 font-bold">Scan to Chat</h2>
+      <QRCodeSVG value="https://your-chat-app-url.com" size={200} />
+    </div>
+  );
+};
 
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();

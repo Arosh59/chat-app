@@ -1,17 +1,17 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
-
 export const protectRoute = async (req, res, next) => {
-    try{
-        const token = req.cookies.jwt;
+  try {
+    // This was crashing because req.cookies was undefined
+    const token = req.cookies.jwt; 
 
-        if(!token){
-            return res.status(401).json({ message: "Unauthorized - No Token Provided" });
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized - No Token Provided" });
+    }
 
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // ... rest of your code
 
         if(!decoded){
            return res.status(401).json({ message: "Unauthorized - Invalid Token" }); 

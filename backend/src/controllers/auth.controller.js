@@ -117,11 +117,15 @@ export const updateProfile = async (req, res) => {
     }
 };
 
-export const checkAuth = (req,res) => {
-    try {
-      res.status(200).json(req.user);
-    } catch (error) {
-      console.log("Error in checkAuth controller", error.message);
-      res.status(500).json({ message: " Internal Server Error" });
+export const checkAuth = (req, res) => {
+  try {
+    // If your authMiddleware is working, req.user is already populated
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized - No User Found" });
     }
-}
+    res.status(200).json(req.user);
+  } catch (error) {
+    console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
