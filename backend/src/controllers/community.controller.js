@@ -25,3 +25,25 @@ export const sendCommunityMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+ 
+
+  export const getMyCommunities = async (req, res) => {
+  try {
+    const userAge = req.user.age;
+    let query;
+
+    if (userAge >= 31) {
+      // Logic for Elders
+      query = { isElderly: true };
+    } else {
+      // Logic for specific age ranges
+      query = { minAge: { $lte: userAge }, maxAge: { $gte: userAge } };
+    }
+
+    const communities = await Community.find(query);
+    res.status(200).json(communities);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
