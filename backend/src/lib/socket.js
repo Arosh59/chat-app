@@ -19,19 +19,37 @@ export function getReceiverSocketId(userId) {
 const userSocketMap = {}; // {userId: socketId}
 
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
-
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+    // The user automatically joins their own private room for 1v1 chats
+    socket.join(userId); 
+  }
 
-  // io.emit() is used to send events to all the connected clients
+  // Tell everyone who is online
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  // --- NEW: COMMUNITY LOGIC ---
+  
+  // When a user clicks a Community on the frontend
+  socket.on("joinCommunity", (communityId) => {
+    socket.join(communityId);
+    console.log(`User ${userId} joined community room: ${communityId}`);
+  });
+
+  // When a user switches to a different chat or logs out
+  socket.on("leaveCommunity", (communityId) => {
+    socket.leave(communityId);
+    console.log(`User ${userId} left community room: ${communityId}`);
+  });
+
+  // --- END COMMUNITY LOGIC ---
+
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
 export { io, app, server };
+

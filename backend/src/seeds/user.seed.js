@@ -1,6 +1,9 @@
 import { config } from "dotenv";
 import { connectDB } from "../lib/db.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
+import communityModel from "../models/community.model.js";
+
 
 config();
 
@@ -100,14 +103,24 @@ const seedUsers = [
   },
 ];
 
+const communities = [
+  { name: "Toddlers Hub", minAge: 3, maxAge: 5, isElderly: false },
+  { name: "Kids Zone", minAge: 6, maxAge: 13, isElderly: false },
+  { name: "Teens Club", minAge: 14, maxAge: 19, isElderly: false },
+  { name: "Young Adults", minAge: 20, maxAge: 30, isElderly: false },
+  { name: "Elders Circle", minAge: 31, maxAge: 150, isElderly: true },
+];
+
 const seedDatabase = async () => {
   try {
-    await connectDB();
-
-    await User.insertMany(seedUsers);
-    console.log("Database seeded successfully");
+    await mongoose.connect(process.env.MONGODB_URI);
+    await communityModel.deleteMany(); // Clears existing groups to avoid duplicates
+    await communityModel.insertMany(communities);
+    console.log("Communities seeded successfully!");
+    process.exit();
   } catch (error) {
     console.error("Error seeding database:", error);
+    process.exit(1);
   }
 };
 

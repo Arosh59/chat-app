@@ -47,3 +47,18 @@ export const sendCommunityMessage = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getCommunityMessages = async (req, res) => {
+  try {
+    const { communityId } = req.params;
+
+    // Find all messages belonging to this community group
+    const messages = await Message.find({ groupId: communityId })
+      .populate("senderId", "fullName profilePic"); // This lets us show the sender's name/photo
+
+    res.status(200).json(messages);
+  } catch (error) {
+    console.log("Error in getCommunityMessages controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

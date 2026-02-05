@@ -12,6 +12,12 @@ const messageSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
+
+        groupId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Community",
+        },
+
         text: {
             type: String,
         },

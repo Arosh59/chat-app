@@ -6,7 +6,9 @@ import { UseAuthStore } from "./UseAuthStore";
 export const useChatStore = create((set, get) => ({
   messages: [],
   users: [],
+  communities: [], // NEW: Store for age groups
   selectedUser: null,
+  selectedCommunity: null, // NEW: Active group
   isUsersLoading: false,
   isMessagesLoading: false,
 
@@ -22,10 +24,22 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  getMessages: async (userId) => {
+  // NEW: Fetch groups based on logged-in user's age
+  getCommunities: async () => {
+    try {
+      const res = await axiosInstance.get("/communities");
+      set({ communities: res.data });
+    } catch (error) {
+      toast.error("Failed to load communities");
+    }
+  },
+
+  getMessages: async (id, isCommunity = false) => {
     set({ isMessagesLoading: true });
     try {
-      const res = await axiosInstance.get(`/messages/${userId}`);
+      // Determine which API to call based on type
+      const endpoint = isCommunity ? `/communities/messages/${id}` : `/messages/${id}`;
+      const res = await axiosInstance.get(endpoint);
       set({ messages: res.data });
     } catch (error) {
       toast.error("Failed to load messages");
@@ -35,9 +49,16 @@ export const useChatStore = create((set, get) => ({
   },
 
   sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
+    const { selectedUser, selectedCommunity, messages } = get();
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      let res;
+      if (selectedCommunity) {
+        // NEW: Send to community API
+        res = await axiosInstance.post(`/communities/send/${selectedCommunity._id}`, messageData);
+      } else {
+        // Existing: Send to private user API
+        res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      }
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error("Failed to send message");
@@ -45,23 +66,45 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
+    const { selectedUser, selectedCommunity } = get();
+    if (!selectedUser && !selectedCommunity) return;
 
     const socket = UseAuthStore.getState().socket;
-    if (!socket) return; // Safety check
+    if (!socket) return;
 
-    socket.off("newMessage");
+    // Listen for Private Messages
     socket.on("newMessage", (newMessage) => {
-      if (newMessage.senderId !== selectedUser._id) return;
-      set({ messages: [...get().messages, newMessage] });
+      const isChattingWithSender = selectedUser && newMessage.senderId === selectedUser._id;
+      if (isChattingWithSender) {
+        set({ messages: [...get().messages, newMessage] });
+      }
+    });
+
+    // NEW: Listen for Community Messages
+    socket.on("newCommunityMessage", (newMessage) => {
+      const isSameGroup = selectedCommunity && newMessage.groupId === selectedCommunity._id;
+      if (isSameGroup) {
+        set({ messages: [...get().messages, newMessage] });
+      }
     });
   },
 
   unsubscribeFromMessages: () => {
     const socket = UseAuthStore.getState().socket;
-    if (socket) socket.off("newMessage");
+    if (socket) {
+      socket.off("newMessage");
+      socket.off("newCommunityMessage");
+    }
   },
 
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
+  setSelectedUser: (selectedUser) => set({ selectedUser, selectedCommunity: null }),
+  
+  // NEW: Helper to switch to community view
+  setSelectedCommunity: (selectedCommunity) => {
+    set({ selectedCommunity, selectedUser: null });
+    if (selectedCommunity) {
+      const socket = UseAuthStore.getState().socket;
+      socket.emit("joinCommunity", selectedCommunity._id);
+    }
+  },
 }));
