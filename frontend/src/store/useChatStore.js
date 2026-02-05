@@ -6,9 +6,9 @@ import { UseAuthStore } from "./UseAuthStore";
 export const useChatStore = create((set, get) => ({
   messages: [],
   users: [],
-  communities: [], // NEW: Store for age groups
+  communities: [],
   selectedUser: null,
-  selectedCommunity: null, // NEW: Active group
+  selectedCommunity: null,
   isUsersLoading: false,
   isMessagesLoading: false,
 
@@ -24,7 +24,6 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  // NEW: Fetch groups based on logged-in user's age
   getCommunities: async () => {
     try {
       const res = await axiosInstance.get("/communities");
@@ -37,7 +36,6 @@ export const useChatStore = create((set, get) => ({
   getMessages: async (id, isCommunity = false) => {
     set({ isMessagesLoading: true });
     try {
-      // Determine which API to call based on type
       const endpoint = isCommunity ? `/communities/messages/${id}` : `/messages/${id}`;
       const res = await axiosInstance.get(endpoint);
       set({ messages: res.data });
@@ -53,10 +51,8 @@ export const useChatStore = create((set, get) => ({
     try {
       let res;
       if (selectedCommunity) {
-        // NEW: Send to community API
         res = await axiosInstance.post(`/communities/send/${selectedCommunity._id}`, messageData);
       } else {
-        // Existing: Send to private user API
         res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
       }
       set({ messages: [...messages, res.data] });
@@ -72,7 +68,6 @@ export const useChatStore = create((set, get) => ({
     const socket = UseAuthStore.getState().socket;
     if (!socket) return;
 
-    // Listen for Private Messages
     socket.on("newMessage", (newMessage) => {
       const isChattingWithSender = selectedUser && newMessage.senderId === selectedUser._id;
       if (isChattingWithSender) {
@@ -80,7 +75,6 @@ export const useChatStore = create((set, get) => ({
       }
     });
 
-    // NEW: Listen for Community Messages
     socket.on("newCommunityMessage", (newMessage) => {
       const isSameGroup = selectedCommunity && newMessage.groupId === selectedCommunity._id;
       if (isSameGroup) {
@@ -98,13 +92,5 @@ export const useChatStore = create((set, get) => ({
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser, selectedCommunity: null }),
-  
-  // NEW: Helper to switch to community view
-  setSelectedCommunity: (selectedCommunity) => {
-    set({ selectedCommunity, selectedUser: null });
-    if (selectedCommunity) {
-      const socket = UseAuthStore.getState().socket;
-      socket.emit("joinCommunity", selectedCommunity._id);
-    }
-  },
+  setSelectedCommunity: (selectedCommunity) => set({ selectedCommunity, selectedUser: null }),
 }));

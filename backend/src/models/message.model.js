@@ -10,20 +10,28 @@ const messageSchema = new mongoose.Schema(
         receiverId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
         },
-
         groupId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Community",
         },
-
         text: {
             type: String,
         },
         image: { 
             type: String,
         },
+        status: {
+            type: String,
+            enum: ["sent", "delivered", "read"],
+            default: "sent",
+        },
+        readBy: [
+            {
+                userId: mongoose.Schema.Types.ObjectId,
+                readAt: Date,
+            },
+        ],
     },
     { timestamps: true }
 );

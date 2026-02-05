@@ -5,6 +5,8 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import CommunitiesPage from "./pages/CommunitiesPage";
+import JoinCommunity from "./pages/JoinCommunity";
 import { UseAuthStore } from "./store/UseAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useEffect } from "react";
@@ -38,6 +40,8 @@ import { Toaster } from "react-hot-toast";
         <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/communities" element={authUser ? <CommunitiesPage /> : <Navigate to="/login" />} />
+        <Route path="/join-community/:id" element={<JoinCommunity />} />
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" /> } />
       </Routes>
 
