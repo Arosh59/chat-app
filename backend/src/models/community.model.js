@@ -4,7 +4,7 @@ const communitySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, default: "" },
-    icon: { type: String, default: "🌍" },
+    image: { type: String, default: "" },
     minAge: { type: Number, required: true },
     maxAge: { type: Number, required: true },
     isElderly: { type: Boolean, default: false },

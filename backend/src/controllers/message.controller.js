@@ -69,3 +69,49 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const markMessageAsDelivered = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      { status: "delivered" },
+      { new: true }
+    );
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in markMessageAsDelivered: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const markMessageAsRead = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      {
+        status: "read",
+        $addToSet: { readBy: { userId, readAt: new Date() } },
+      },
+      { new: true }
+    );
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.log("Error in markMessageAsRead: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

@@ -18,9 +18,11 @@ import {
   Save,
   X,
   Camera,
+  Image,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import WallpaperSelector from "../components/WallpaperSelector";
 
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
@@ -30,6 +32,7 @@ const SettingsPage = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [age, setAge] = useState(authUser?.age || "");
   const [language, setLanguage] = useState(authUser?.language || "en");
+  const [wallpaper, setWallpaperState] = useState(authUser?.wallpaper || "bg-base-100");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleAgeChange = (e) => {
@@ -77,6 +80,20 @@ const SettingsPage = () => {
       setActiveModal(null);
     } catch (error) {
       toast.error("Failed to update theme");
+    }
+  };
+
+  const handleWallpaperSelect = async (wallpaperClass) => {
+    try {
+      setIsSaving(true);
+      await updateProfile({ wallpaper: wallpaperClass });
+      setWallpaperState(wallpaperClass);
+      toast.success("Wallpaper updated!");
+      setActiveModal(null);
+    } catch (error) {
+      toast.error("Failed to update wallpaper");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -392,6 +409,15 @@ const SettingsPage = () => {
             <button>close</button>
           </form>
         </dialog>
+      )}
+
+      {/* Wallpaper Selector Modal */}
+      {activeModal === "wallpaper" && (
+        <WallpaperSelector
+          currentWallpaper={wallpaper}
+          onSelect={handleWallpaperSelect}
+          onClose={() => setActiveModal(null)}
+        />
       )}
 
       {/* QR Code Modal */}

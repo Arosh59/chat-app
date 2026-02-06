@@ -81,6 +81,24 @@ export const useChatStore = create((set, get) => ({
         set({ messages: [...get().messages, newMessage] });
       }
     });
+
+    // Listen for message delivery updates
+    socket.on("messageDelivered", (data) => {
+      const { messageId, status } = data;
+      const updatedMessages = get().messages.map((msg) =>
+        msg._id === messageId ? { ...msg, status } : msg
+      );
+      set({ messages: updatedMessages });
+    });
+
+    // Listen for message read receipts
+    socket.on("messageReadReceipt", (data) => {
+      const { messageId, status } = data;
+      const updatedMessages = get().messages.map((msg) =>
+        msg._id === messageId ? { ...msg, status } : msg
+      );
+      set({ messages: updatedMessages });
+    });
   },
 
   unsubscribeFromMessages: () => {
@@ -88,9 +106,50 @@ export const useChatStore = create((set, get) => ({
     if (socket) {
       socket.off("newMessage");
       socket.off("newCommunityMessage");
+      socket.off("messageDelivered");
+      socket.off("messageReadReceipt");
     }
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser, selectedCommunity: null }),
   setSelectedCommunity: (selectedCommunity) => set({ selectedCommunity, selectedUser: null }),
+
+  createCommunity: async (communityData) => {
+    try {
+      const res = await axiosInstance.post("/communities/create", communityData);
+      toast.success("Community created successfully!");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to create community");
+    }
+  },
+
+  joinCommunity: async (communityId) => {
+    try {
+      const res = await axiosInstance.post(`/communities/${communityId}/join`);
+      toast.success("Joined community successfully!");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to join community");
+    }
+  },
+
+  leaveCommunity: async (communityId) => {
+    try {
+      await axiosInstance.post(`/communities/${communityId}/leave`);
+      toast.success("Left community successfully!");
+    } catch (error) {
+      toast.error("Failed to leave community");
+    }
+  },
+
+  updateCommunity: async (communityId, communityData) => {
+    try {
+      const res = await axiosInstance.put(`/communities/${communityId}`, communityData);
+      toast.success("Community updated successfully!");
+      return res.data;
+    } catch (error) {
+      toast.error("Failed to update community");
+    }
+  },
 }));

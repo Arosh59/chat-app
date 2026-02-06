@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { UseAuthStore } from "../store/UseAuthStore";
-import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare, User } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare, User, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import AuthImagePattern from "../components/AuthImagePattern";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ const SignUpPage = () => {
     fullName: "",
     email: "",
     password: "",
+    age: "",
   });
 
   const { signup, isSigningUp } = UseAuthStore();
@@ -23,6 +24,8 @@ const SignUpPage = () => {
     if (!/\S+@\S+\.\S+/.test(formData.email)) return toast.error("Invalid email format");
     if (!formData.password) return toast.error("Password is required");
     if (formData.password.length < 6) return toast.error("Password must be at least 6 characters");
+    if (!formData.age) return toast.error("Age is required");
+    if (isNaN(formData.age) || formData.age < 5 || formData.age > 100) return toast.error("Age must be between 5 and 100");
 
     return true;
   };
@@ -87,6 +90,26 @@ const SignUpPage = () => {
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Age</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 z-40 left-0 pl-3 flex items-center pointer-events-none">
+                  <Calendar className="size-5 text-base-content/40" />
+                </div>
+                <input
+                  type="number"
+                  className={`input input-bordered w-full pl-10`}
+                  placeholder="25"
+                  min="5"
+                  max="100"
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                 />
               </div>
             </div>

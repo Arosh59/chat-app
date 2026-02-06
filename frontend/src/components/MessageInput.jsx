@@ -1,13 +1,56 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { UseAuthStore } from "../store/UseAuthStore";
+import { Image, Send, X, Camera as CameraIcon } from "lucide-react";
 import toast from "react-hot-toast";
+import CameraCapture from "./CameraCapture";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const typingTimeoutRef = useRef(null);
+  const { sendMessage, selectedUser, selectedCommunity } = useChatStore();
+  const { authUser, socket } = UseAuthStore();
+
+  // Debounced typing indicator
+  const handleInputChange = (e) => {
+    setText(e.target.value);
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Emit typing event
+    if (socket) {
+      socket.emit("userTyping", {
+        receiverId: selectedUser?._id,
+        groupId: selectedCommunity?._id,
+        senderName: authUser?.fullName,
+      });
+    }
+
+    // Set timeout to stop typing after 1 second of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      if (socket) {
+        socket.emit("userStoppedTyping", {
+          receiverId: selectedUser?._id,
+          groupId: selectedCommunity?._id,
+        });
+      }
+    }, 1000);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -37,6 +80,14 @@ const MessageInput = () => {
         text: text.trim(),
         image: imagePreview,
       });
+
+      // Emit stopped typing on send
+      if (socket) {
+        socket.emit("userStoppedTyping", {
+          receiverId: selectedUser?._id,
+          groupId: selectedCommunity?._id,
+        });
+      }
 
       // Clear form
       setText("");
@@ -76,7 +127,7 @@ const MessageInput = () => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleInputChange}
           />
           <input
             type="file"
@@ -94,6 +145,15 @@ const MessageInput = () => {
           >
             <Image size={20} />
           </button>
+
+          <button
+            type="button"
+            className="hidden sm:flex btn btn-circle text-zinc-400 hover:text-primary"
+            onClick={() => setShowCamera(true)}
+            title="Take photo"
+          >
+            <CameraIcon size={20} />
+          </button>
         </div>
         <button
           type="submit"
@@ -103,6 +163,14 @@ const MessageInput = () => {
           <Send size={22} />
         </button>
       </form>
+
+      {/* Camera Capture Modal */}
+      {showCamera && (
+        <CameraCapture
+          onCapture={setImagePreview}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
     </div>
   );
 };
