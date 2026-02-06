@@ -40,6 +40,29 @@ const WallpaperSelector = ({ currentWallpaper, onSelect, onClose }) => {
 
         <h3 className="font-bold text-lg mb-4">Choose Chat Wallpaper</h3>
 
+        {/* Upload from device */}
+        <div className="mb-4">
+          <label htmlFor="wallpaper-upload" className="btn btn-sm mr-2">Upload from device</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            id="wallpaper-upload"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () => {
+                const base64 = reader.result;
+                onSelect(base64);
+                toast.success("Wallpaper uploaded!");
+                onClose();
+              };
+            }}
+          />
+        </div>
+
         {/* Wallpaper Grid */}
         <div className="grid grid-cols-2 gap-3 mb-6 max-h-64 overflow-y-auto">
           {WALLPAPERS.map((wallpaper) => (

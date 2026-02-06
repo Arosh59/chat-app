@@ -23,6 +23,7 @@ import {
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import WallpaperSelector from "../components/WallpaperSelector";
+import QRGenerator from "../components/QRGenerator";
 
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
@@ -34,6 +35,9 @@ const SettingsPage = () => {
   const [language, setLanguage] = useState(authUser?.language || "en");
   const [wallpaper, setWallpaperState] = useState(authUser?.wallpaper || "bg-base-100");
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [nameInput, setNameInput] = useState(authUser?.fullName || "");
+  const [statusInput, setStatusInput] = useState(authUser?.status || "");
 
   const handleAgeChange = (e) => {
     const value = e.target.value.replace(/\D/g, "");
@@ -193,39 +197,39 @@ const SettingsPage = () => {
         },
       ],
     },
-    {
-      id: "privacy",
-      title: "Privacy & Security",
-      items: [
         {
-          icon: <Lock size={20} />,
-          label: "Privacy",
-          description: "Manage who can message you",
-          action: () => toast.info("Privacy settings"),
-          badge: null,
-        },
-      ],
-    },
-    {
-      id: "help",
-      title: "Help",
-      items: [
-        {
-          icon: <HelpCircle size={20} />,
-          label: "Help Center",
-          description: "Get help with the app",
-          action: () => toast.info("Help Center"),
-          badge: null,
+          id: "privacy",
+          title: "Privacy & Security",
+          items: [
+            {
+              icon: <Lock size={20} />,
+              label: "Privacy",
+              description: "Manage who can message you",
+              action: () => setActiveModal("privacy"),
+              badge: null,
+            },
+          ],
         },
         {
-          icon: <Info size={20} />,
-          label: "About",
-          description: "Chatty v1.0.0 • Built with ❤️",
-          action: () => toast.info("About Chatty"),
-          badge: null,
+          id: "help",
+          title: "Help",
+          items: [
+            {
+              icon: <HelpCircle size={20} />,
+              label: "Help Center",
+              description: "Get help with the app",
+              action: () => setActiveModal("helpcenter"),
+              badge: null,
+            },
+            {
+              icon: <Info size={20} />,
+              label: "About",
+              description: "Chatty v1.0.0 • Built with ❤️",
+              action: () => setActiveModal("about"),
+              badge: null,
+            },
+          ],
         },
-      ],
-    },
   ];
 
   return (
@@ -420,10 +424,235 @@ const SettingsPage = () => {
         />
       )}
 
+      {/* Avatar Modal */}
+      {activeModal === "avatar" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">Update Avatar</h3>
+            <div className="flex flex-col items-center gap-4 mb-4">
+              <img
+                src={avatarPreview || authUser.profilePic || "/avatar.png"}
+                alt="Preview"
+                className="w-32 h-32 rounded-full object-cover"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.readAsDataURL(file);
+                  reader.onload = () => setAvatarPreview(reader.result);
+                }}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-ghost flex-1" onClick={() => setActiveModal(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary flex-1"
+                onClick={async () => {
+                  if (!avatarPreview) return toast.error("Select an image first");
+                  try {
+                    setIsSaving(true);
+                    await updateProfile({ profilePic: avatarPreview });
+                    toast.success("Avatar updated");
+                    setActiveModal(null);
+                  } catch (err) {
+                    toast.error("Failed to update avatar");
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+              >
+                {isSaving ? <span className="loading loading-spinner" /> : "Save"}
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Name Modal */}
+      {activeModal === "name" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">Edit Name</h3>
+            <input
+              className="input input-bordered w-full mb-4"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Full name"
+            />
+            <div className="flex gap-2">
+              <button className="btn btn-ghost flex-1" onClick={() => setActiveModal(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary flex-1"
+                onClick={async () => {
+                  if (!nameInput) return toast.error("Name cannot be empty");
+                  try {
+                    setIsSaving(true);
+                    await updateProfile({ fullName: nameInput });
+                    toast.success("Name updated");
+                    setActiveModal(null);
+                  } catch (err) {
+                    toast.error("Failed to update name");
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+              >
+                {isSaving ? <span className="loading loading-spinner" /> : "Save"}
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Status / About Modal */}
+      {activeModal === "status" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">Edit About</h3>
+            <textarea
+              className="textarea textarea-bordered w-full mb-4"
+              rows={4}
+              value={statusInput}
+              onChange={(e) => setStatusInput(e.target.value)}
+              placeholder="A short status or about"
+            />
+            <div className="flex gap-2">
+              <button className="btn btn-ghost flex-1" onClick={() => setActiveModal(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary flex-1"
+                onClick={async () => {
+                  try {
+                    setIsSaving(true);
+                    await updateProfile({ status: statusInput });
+                    toast.success("About updated");
+                    setActiveModal(null);
+                  } catch (err) {
+                    toast.error("Failed to update about");
+                  } finally {
+                    setIsSaving(false);
+                  }
+                }}
+              >
+                {isSaving ? <span className="loading loading-spinner" /> : "Save"}
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Privacy Modal */}
+      {activeModal === "privacy" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">Privacy & Security</h3>
+            <p className="text-sm mb-4">Manage who can message you and other privacy options. (Placeholder)</p>
+            <div className="flex gap-2">
+              <button className="btn btn-primary flex-1" onClick={() => setActiveModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Help Center Modal */}
+      {activeModal === "helpcenter" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">Help & Support</h3>
+            <p className="text-sm mb-4">Visit our docs or contact support at support@example.com (placeholder)</p>
+            <div className="flex gap-2">
+              <button className="btn btn-primary flex-1" onClick={() => setActiveModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* About Modal */}
+      {activeModal === "about" && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-bold text-lg mb-4">About Chatty</h3>
+            <p className="text-sm mb-4">Chatty v1.0.0 — A tiny real-time chat app example. Built with React, Node, Socket.io.</p>
+            <div className="flex gap-2">
+              <button className="btn btn-primary flex-1" onClick={() => setActiveModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
       {/* QR Code Modal */}
       {activeModal === "qr" && (
         <dialog className="modal modal-open">
-          <div className="modal-box text-center">
+          <div className="modal-box text-center max-w-md">
             <button
               onClick={() => setActiveModal(null)}
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -436,15 +665,9 @@ const SettingsPage = () => {
             <p className="text-sm text-base-content/70 mb-4">
               Scan this QR code with another device to link it to your account.
             </p>
-            <div className="bg-white p-4 rounded-lg mx-auto w-64 h-64 flex items-center justify-center">
-              <p className="text-base-content/50">QR Code will appear here</p>
+            <div className="mx-auto w-full">
+              <QRGenerator />
             </div>
-            <button
-              className="btn btn-primary w-full mt-4"
-              onClick={() => toast.success("QR Code generated!")}
-            >
-              Generate New Code
-            </button>
           </div>
           <form method="dialog" className="modal-backdrop" onClick={() => setActiveModal(null)}>
             <button>close</button>

@@ -107,7 +107,7 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { profilePic, fullName, status, wallpaper } = req.body;
+        const { profilePic, fullName, status, wallpaper, age, language, theme } = req.body;
         const userId = req.user._id;
 
         const updateData = {};
@@ -123,6 +123,19 @@ export const updateProfile = async (req, res) => {
 
         if (status) {
             updateData.status = status;
+        }
+
+        if (typeof age !== "undefined") {
+            const parsed = parseInt(age);
+            if (!isNaN(parsed)) updateData.age = parsed;
+        }
+
+        if (language) {
+            updateData.language = language;
+        }
+
+        if (theme) {
+            updateData.theme = theme;
         }
 
         if (wallpaper) {
