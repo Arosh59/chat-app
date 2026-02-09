@@ -14,8 +14,33 @@ export const createCommunity = async (req, res) => {
 
     let imageUrl = "";
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
+      // Create new community first to get its ID
+      const tempCommunity = new Community({
+        name,
+        description,
+        minAge: parseInt(minAge),
+        maxAge: parseInt(maxAge),
+        isElderly: maxAge > 60,
+        members: [createdBy],
+        createdBy,
+      });
+      
+      // Save temporarily to get the _id
+      await tempCommunity.save();
+      
+      // Upload image with unique public_id
+      const uploadResponse = await cloudinary.uploader.upload(image, {
+        resource_type: "auto",
+        public_id: `community_${tempCommunity._id}_image`,
+      });
       imageUrl = uploadResponse.secure_url;
+      
+      // Update with image URL
+      tempCommunity.image = imageUrl;
+      await tempCommunity.save();
+      await tempCommunity.populate("createdBy", "fullName profilePic");
+      
+      return res.status(201).json(tempCommunity);
     }
 
     const newCommunity = new Community({
@@ -44,6 +69,9 @@ export const updateCommunity = async (req, res) => {
     const { communityId } = req.params;
     const { name, description, image } = req.body;
     const userId = req.user._id;
+    const isAdmin = req.user.isAdmin;
+
+    console.log("Update community request:", { communityId, userId, isAdmin });
 
     const community = await Community.findById(communityId);
 
@@ -51,23 +79,39 @@ export const updateCommunity = async (req, res) => {
       return res.status(404).json({ error: "Community not found" });
     }
 
-    if (community.createdBy.toString() !== userId.toString()) {
-      return res.status(403).json({ error: "Only admin can update community" });
+    console.log("Community found:", { id: community._id, createdBy: community.createdBy, members: community.members?.length });
+
+    // Check if user is a member of the community or is an admin
+    const currentUserId = userId.toString();
+    const isMember = community.members?.some(m => m.toString() === currentUserId);
+
+    // Allow editing if user is a member or an admin
+    if (!isMember && !isAdmin) {
+      return res.status(403).json({ error: "Only community members and admins can update the community" });
     }
 
     if (name) community.name = name;
     if (description) community.description = description;
 
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      community.image = uploadResponse.secure_url;
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(image, {
+          resource_type: "auto",
+          public_id: `community_${communityId}_image`,
+          overwrite: true,
+        });
+        community.image = uploadResponse.secure_url;
+      } catch (uploadError) {
+        console.log("Cloudinary upload error:", uploadError.message);
+        return res.status(400).json({ error: "Image upload failed: " + uploadError.message });
+      }
     }
 
     await community.save();
     res.status(200).json(community);
   } catch (error) {
     console.log("Error in updateCommunity:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
 

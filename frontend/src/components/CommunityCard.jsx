@@ -4,7 +4,7 @@ import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { Users, Share2 } from "lucide-react";
 
-const CommunityCard = ({ community, onOpen }) => {
+const CommunityCard = ({ community, onOpen, onEdit }) => {
   const { setSelectedCommunity } = useChatStore();
   const [loading, setLoading] = useState(false);
 
@@ -27,22 +27,43 @@ const CommunityCard = ({ community, onOpen }) => {
     }
   };
 
+  const handleEdit = () => {
+    onEdit && onEdit(community);
+  };
+
   return (
     <div className="card bg-base-200 shadow-md hover:shadow-lg transition-all">
       {/* Community Image */}
-      <div className="relative h-40 bg-linear-to-br from-primary/20 to-secondary/20 overflow-hidden">
+      <div className="relative h-40 bg-linear-to-br from-primary/20 to-secondary/20 overflow-hidden group cursor-pointer">
         {community.image ? (
-          <img
-            src={community.image}
-            alt={community.name}
-            className="w-full h-full object-cover"
-          />
+          <>
+            <img
+              src={community.image}
+              alt={community.name}
+              className="w-full h-full object-cover"
+            />
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition"
+              >
+                <p className="text-white text-sm font-medium">Click to change image</p>
+              </button>
+            )}
+          </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-base-300">
-            <div className="text-center">
+          <div className="w-full h-full flex items-center justify-center bg-base-300 relative">
+            <div className="text-center z-10">
               <div className="text-5xl mb-2">👥</div>
               <p className="text-xs text-base-content/50">No image</p>
+              {onEdit && <p className="text-xs text-primary mt-2 group-hover:text-primary-focus">Click to add image</p>}
             </div>
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition"
+              />
+            )}
           </div>
         )}
       </div>

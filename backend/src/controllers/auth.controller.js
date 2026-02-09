@@ -43,6 +43,7 @@ export const signup = async (req, res) => {
                 email: newUser.email,
                 age: newUser.age,
                 profilePic: newUser.profilePic,
+                isAdmin: newUser.isAdmin,
             });
 
         } else {
@@ -84,6 +85,7 @@ try {
         language: user.language,
         wallpaper: user.wallpaper,
         isOnline: user.isOnline,
+        isAdmin: user.isAdmin,
     });
 
 } catch (error) {
@@ -170,6 +172,7 @@ export const checkAuth = (req, res) => {
       language: req.user.language,
       wallpaper: req.user.wallpaper,
       isOnline: req.user.isOnline,
+      isAdmin: req.user.isAdmin,
     });
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);

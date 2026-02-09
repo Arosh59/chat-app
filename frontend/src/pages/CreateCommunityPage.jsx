@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChatStore } from "../store/useChatStore";
-import { Image as ImageIcon, Loader2, ArrowLeft } from "lucide-react";
+import { Image as ImageIcon, Loader2, ArrowLeft, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CreateCommunityPage = () => {
@@ -114,37 +114,48 @@ const CreateCommunityPage = () => {
             />
           </div>
 
-          {/* Image Upload */}
+          {/* Image Upload with Preview and Edit Button */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text font-semibold">Community Image</span>
+              <span className="label-text font-semibold">Community Card Image</span>
             </label>
-            <label className="flex items-center justify-center w-full p-8 border-2 border-dashed border-base-300 rounded-lg cursor-pointer hover:border-primary transition">
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageSelect}
-              />
-              <div className="text-center">
-                {formData.imagePreview ? (
-                  <div className="space-y-4">
-                    <img
-                      src={formData.imagePreview}
-                      alt="Preview"
-                      className="w-32 h-32 object-cover rounded-lg mx-auto"
+            <div className="space-y-4">
+              {formData.imagePreview ? (
+                <div className="relative">
+                  <img
+                    src={formData.imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg opacity-0 hover:opacity-100 transition cursor-pointer">
+                    <div className="text-center text-white">
+                      <Upload size={32} className="mx-auto mb-2" />
+                      <p className="text-sm">Click to change image</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageSelect}
                     />
-                    <p className="text-sm text-base-content/60">Click to change image</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <ImageIcon size={32} className="mx-auto text-base-content/40" />
+                  </label>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center w-full p-8 border-2 border-dashed border-base-300 rounded-lg cursor-pointer hover:border-primary transition">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                  />
+                  <div className="text-center">
+                    <ImageIcon size={32} className="mx-auto text-base-content/40 mb-2" />
                     <p className="text-sm font-medium">Click to upload image</p>
                     <p className="text-xs text-base-content/60">PNG, JPG, GIF up to 5MB</p>
                   </div>
-                )}
-              </div>
-            </label>
+                </label>
+              )}
+            </div>
           </div>
 
           {/* Age Range */}
